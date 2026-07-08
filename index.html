@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soundboard</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="toolbar">
+        <div class="device-selects">
+          <label class="device-select">
+            <span>モニター出力</span>
+            <select id="monitor-device"></select>
+          </label>
+          <label class="device-select">
+            <span>仮想デバイス出力</span>
+            <select id="virtual-device"></select>
+          </label>
+        </div>
+        <div class="toolbar-actions">
+          <button id="stop-btn" class="btn btn-danger">停止</button>
+          <button id="add-btn" class="btn btn-primary">＋ 音声を追加</button>
+        </div>
+      </header>
+
+      <main>
+        <div id="empty-state" class="empty-state" hidden>
+          <p>登録された音声がありません。「＋ 音声を追加」から追加してください。</p>
+        </div>
+        <div id="sound-grid" class="sound-grid"></div>
+      </main>
+
+      <div id="status-bar" class="status-bar"></div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

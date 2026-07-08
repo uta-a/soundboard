@@ -1,0 +1,5 @@
+[env]
+# opus クレート(audiopus_sys)がビルドする libopus の CMakeLists.txt は
+# 古い cmake_minimum_required を宣言しており、新しいCMake(3.31以降/4.x)では
+# 互換性エラーになる。CMake自体がこの環境変数を読み、互換モードで動作する。
+CMAKE_POLICY_VERSION_MINIMUM = "3.5"
