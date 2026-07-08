@@ -11,7 +11,11 @@ pub struct SoundEntry {
     pub path: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+fn default_volume() -> f32 {
+    1.0
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
     #[serde(default)]
     pub sounds: Vec<SoundEntry>,
@@ -19,6 +23,28 @@ pub struct AppConfig {
     pub monitor_device: Option<String>,
     #[serde(default)]
     pub virtual_device: Option<String>,
+    #[serde(default)]
+    pub mic_device: Option<String>,
+    #[serde(default = "default_volume")]
+    pub mic_volume: f32,
+    #[serde(default = "default_volume")]
+    pub master_volume: f32,
+    #[serde(default)]
+    pub mic_toggle_shortcut: Option<String>,
+}
+
+impl Default for AppConfig {
+    fn default() -> Self {
+        Self {
+            sounds: Vec::new(),
+            monitor_device: None,
+            virtual_device: None,
+            mic_device: None,
+            mic_volume: default_volume(),
+            master_volume: default_volume(),
+            mic_toggle_shortcut: None,
+        }
+    }
 }
 
 impl SoundEntry {

@@ -10,6 +10,7 @@
   --accent-hover: #78bbff;
   --danger: #ff5a6e;
   --danger-hover: #ff7a8b;
+  --mic-on: #ff5a6e;
 }
 
 * {
@@ -69,6 +70,70 @@ body {
 .toolbar-actions {
   display: flex;
   gap: 8px;
+}
+
+.mic-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.btn-mic {
+  min-width: 96px;
+  border-color: var(--border);
+}
+
+.btn-mic[aria-pressed="true"] {
+  background: var(--mic-on);
+  border-color: var(--mic-on);
+  color: #1a0507;
+  font-weight: 600;
+}
+
+.volume-control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.volume-control input[type="range"] {
+  width: 140px;
+  accent-color: var(--accent);
+}
+
+.volume-value {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.hotkey-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.hotkey-display {
+  min-width: 90px;
+  padding: 4px 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 12px;
+  text-align: center;
+}
+
+.hotkey-display.recording {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .btn {

@@ -10,6 +10,7 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
+tauri-plugin-global-shortcut = "2"
 cpal = "0.15"
 rodio = { version = "0.19", default-features = false, features = ["symphonia-all"] }
 ogg = "0.9"

@@ -25,6 +25,30 @@
         </div>
       </header>
 
+      <div class="mic-bar">
+        <label class="device-select">
+          <span>マイク入力</span>
+          <select id="mic-device"></select>
+        </label>
+        <button id="mic-toggle" class="btn btn-mic" aria-pressed="false">マイク OFF</button>
+        <div class="hotkey-control">
+          <span>ホットキー</span>
+          <span id="hotkey-display" class="hotkey-display">未設定</span>
+          <button id="hotkey-set-btn" class="btn">設定</button>
+          <button id="hotkey-clear-btn" class="btn btn-danger" hidden>解除</button>
+        </div>
+        <label class="volume-control">
+          <span>マイク音量</span>
+          <input type="range" id="mic-volume" min="0" max="150" step="1" value="100" />
+          <span id="mic-volume-value" class="volume-value">100%</span>
+        </label>
+        <label class="volume-control">
+          <span>マスター音量</span>
+          <input type="range" id="master-volume" min="0" max="150" step="1" value="100" />
+          <span id="master-volume-value" class="volume-value">100%</span>
+        </label>
+      </div>
+
       <main>
         <div id="empty-state" class="empty-state" hidden>
           <p>登録された音声がありません。「＋ 音声を追加」から追加してください。</p>
