@@ -8,55 +8,131 @@
   </head>
   <body>
     <div class="app">
-      <header class="toolbar">
-        <div class="device-selects">
-          <label class="device-select">
-            <span>モニター出力</span>
-            <select id="monitor-device"></select>
-          </label>
-          <label class="device-select">
-            <span>仮想デバイス出力</span>
-            <select id="virtual-device"></select>
-          </label>
+      <header class="topbar">
+        <div class="topbar-lead">
+          <h1 class="brand-name">Soundboard</h1>
+
+          <div class="tabs" role="tablist" aria-label="表示の切り替え">
+            <button
+              id="tab-sounds"
+              class="tab"
+              role="tab"
+              type="button"
+              aria-selected="true"
+              aria-controls="panel-sounds"
+              tabindex="0"
+            >
+              サウンド
+            </button>
+            <button
+              id="tab-settings"
+              class="tab"
+              role="tab"
+              type="button"
+              aria-selected="false"
+              aria-controls="panel-settings"
+              tabindex="-1"
+            >
+              設定
+            </button>
+          </div>
         </div>
-        <div class="toolbar-actions">
-          <button id="stop-btn" class="btn btn-danger">停止</button>
-          <button id="add-btn" class="btn btn-primary">＋ 音声を追加</button>
+
+        <div class="topbar-actions">
+          <!-- マイクの生死は設定タブに隠さず常時見えるようにする -->
+          <button id="mic-toggle" class="live-btn" type="button" aria-pressed="false">
+            <span class="tally" aria-hidden="true"></span>
+            <span class="live-btn-text">マイク停止中</span>
+          </button>
+          <!-- サウンドの操作。設定タブでは意味を持たないので隠す -->
+          <button id="stop-btn" class="btn btn-quiet sounds-action" type="button">すべて停止</button>
+          <button id="add-btn" class="btn btn-primary sounds-action" type="button">音声を追加</button>
+          <button id="theme-toggle" class="icon-btn" type="button" title="テーマを切り替える">
+            <span id="theme-toggle-label">DARK</span>
+          </button>
         </div>
       </header>
 
-      <div class="mic-bar">
-        <label class="device-select">
-          <span>マイク入力</span>
-          <select id="mic-device"></select>
-        </label>
-        <button id="mic-toggle" class="btn btn-mic" aria-pressed="false">マイク OFF</button>
-        <div class="hotkey-control">
-          <span>ホットキー</span>
-          <span id="hotkey-display" class="hotkey-display">未設定</span>
-          <button id="hotkey-set-btn" class="btn">設定</button>
-          <button id="hotkey-clear-btn" class="btn btn-danger" hidden>解除</button>
-        </div>
-        <label class="volume-control">
-          <span>マイク音量</span>
-          <input type="range" id="mic-volume" min="0" max="150" step="1" value="100" />
-          <span id="mic-volume-value" class="volume-value">100%</span>
-        </label>
-        <label class="volume-control">
-          <span>マスター音量</span>
-          <input type="range" id="master-volume" min="0" max="150" step="1" value="100" />
-          <span id="master-volume-value" class="volume-value">100%</span>
-        </label>
-      </div>
+      <main class="content">
+        <section id="panel-sounds" class="tabpanel" role="tabpanel" aria-labelledby="tab-sounds" tabindex="0">
+          <div id="empty-state" class="empty-state" hidden>
+            <p class="empty-title">サウンドがありません</p>
+            <p class="empty-hint">「音声を追加」から wav / mp3 / ogg / flac / opus を登録します。</p>
+          </div>
 
-      <main>
-        <div id="empty-state" class="empty-state" hidden>
-          <p>登録された音声がありません。「＋ 音声を追加」から追加してください。</p>
-        </div>
-        <div id="sound-grid" class="sound-grid"></div>
+          <div id="sound-grid" class="sound-grid"></div>
+        </section>
+
+        <section
+          id="panel-settings"
+          class="tabpanel"
+          role="tabpanel"
+          aria-labelledby="tab-settings"
+          tabindex="0"
+          hidden
+        >
+          <div class="panels">
+            <section class="panel-card">
+              <h2 class="eyebrow">入力</h2>
+
+              <label class="field">
+                <span class="field-label">マイク</span>
+                <select id="mic-device"></select>
+              </label>
+
+              <label class="field">
+                <span class="field-label">
+                  マイク音量
+                  <span id="mic-volume-value" class="readout">100%</span>
+                </span>
+                <input type="range" id="mic-volume" min="0" max="150" step="1" value="100" />
+              </label>
+
+              <div class="field">
+                <span class="field-label">ホットキー</span>
+                <div class="hotkey-row">
+                  <button id="hotkey-display" class="hotkey-display" type="button" title="クリックしてキーを登録">
+                    未設定
+                  </button>
+                  <button id="hotkey-clear-btn" class="ghost-btn" type="button" title="ホットキーを解除" hidden>
+                    ×
+                  </button>
+                </div>
+              </div>
+              <p class="field-hint">アプリが背面にあってもマイクを切り替えられます。</p>
+            </section>
+
+            <section class="panel-card">
+              <h2 class="eyebrow">出力</h2>
+
+              <label class="field">
+                <span class="field-label">仮想デバイス</span>
+                <select id="virtual-device"></select>
+              </label>
+              <p class="field-hint">通話相手に届きます。マイクと効果音の両方がここへ流れます。</p>
+
+              <label class="field">
+                <span class="field-label">モニター</span>
+                <select id="monitor-device"></select>
+              </label>
+              <p class="field-hint">自分だけに聞こえます。効果音のみが流れます。</p>
+
+              <label class="field">
+                <span class="field-label">
+                  効果音の音量
+                  <span id="master-volume-value" class="readout">100%</span>
+                </span>
+                <input type="range" id="master-volume" min="0" max="150" step="1" value="100" />
+              </label>
+            </section>
+          </div>
+        </section>
       </main>
 
-      <div id="status-bar" class="status-bar"></div>
+      <footer id="status-bar" class="status-bar">
+        <span id="status-message"></span>
+        <span id="sound-count" class="readout">0 件</span>
+      </footer>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

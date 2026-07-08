@@ -1,251 +1,599 @@
+/*
+  soundboard — DESIGN.md (Claude-design-analysis) 準拠
+
+  採用: cream canvas / coral primary / serif display / 4pxスペーシング /
+        radiusスケール(8=控え,12=カード) / タッチターゲット40px / 活字下限12px /
+        elevation は color-block first・shadow なし
+  逸脱(理由つき):
+  - Anthropic spike-mark は商標のため不使用。ワードマークは書体のみ。
+  - ダークテーマは DESIGN.md に規定がないため surface-dark 系
+    (#181715 / #1f1e1b / #252320) から導出。hairline 等の中間色は独自に補間。
+  - カード内 padding 32px はマーケティング紙面の尺度なので、
+    アプリ密度に合わせ 16px (spacing.md) に縮小。4px グリッドは維持。
+  - 赤の排他規約は維持: --live は「マイクが生きている」状態専用。
+    ステータスバーのエラーは --warn (DESIGN.md warning #d4a017) が担う。
+*/
+
 :root {
+  /* colors — DESIGN.md より */
+  --canvas: #faf9f5;
+  --surface: #f5f0e8;        /* surface-soft: サイドバー */
+  --card: #efe9de;           /* surface-card: サウンドカード */
+  --card-strong: #e8e0d2;    /* surface-cream-strong: カードhover・選択タブ */
+  --hairline: #e6dfd8;
+  --hairline-soft: #ebe6df;
+  --ink: #141413;
+  --body: #3d3d3a;
+  --muted: #6c6a64;
+  --muted-soft: #8e8b82;
+  --primary: #cc785c;
+  --primary-active: #a9583e;
+  --on-primary: #ffffff;
+  --live: #c64545;           /* error 相当だが本アプリではLIVEマイク専用 */
+  --live-glow: rgba(198, 69, 69, 0.18);
+  --warn: #d4a017;
+
+  /* typography */
+  --font-display: "Cormorant Garamond", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  --font-ui: Inter, "Segoe UI", "Yu Gothic UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+
+  /* rounded */
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  /* DESIGN.md の dark surface 群から導出（文書にダークモード規定なし） */
+  --canvas: #181715;         /* surface-dark */
+  --surface: #1f1e1b;        /* surface-dark-soft */
+  --card: #252320;           /* surface-dark-elevated */
+  --card-strong: #2e2b27;    /* 導出: elevated の一段明 */
+  --hairline: #34312b;       /* 導出 */
+  --hairline-soft: #2b2925;  /* 導出 */
+  --ink: #faf9f5;            /* on-dark */
+  --body: #d6d3cc;           /* 導出 */
+  --muted: #a09d96;          /* on-dark-soft */
+  --muted-soft: #7a776f;     /* 導出 */
+  --live-glow: rgba(198, 69, 69, 0.3);
+
   color-scheme: dark;
-  --bg: #17181c;
-  --surface: #1f2127;
-  --surface-hover: #2a2d35;
-  --border: #33363f;
-  --text: #e7e8ea;
-  --text-dim: #9a9ca5;
-  --accent: #5aaaff;
-  --accent-hover: #78bbff;
-  --danger: #ff5a6e;
-  --danger-hover: #ff7a8b;
-  --mic-on: #ff5a6e;
 }
 
 * {
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
   height: 100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: "Segoe UI", "Yu Gothic UI", system-ui, sans-serif;
+  background: var(--canvas);
+  color: var(--body);
+  font-family: var(--font-ui);
   font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
 }
 
+/* text-input-focused: coral の 15% リング */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px rgba(204, 120, 92, 0.15);
+  border-radius: var(--r-md);
+}
+
+/* ---------- 骨格 ---------- */
+
+/* コマンドバー(ブランド+タブ+操作) / タブパネル / 下部ステータス */
 .app {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
   height: 100vh;
 }
 
-.toolbar {
+.topbar {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border);
+  min-height: 56px;
+  padding: 8px 16px;
   background: var(--surface);
+  border-bottom: 1px solid var(--hairline);
 }
 
-.device-selects {
+.topbar-lead {
   display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.device-select {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--text-dim);
-}
-
-.device-select select {
-  min-width: 200px;
-  padding: 6px 8px;
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 13px;
-}
-
-.toolbar-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.mic-bar {
-  display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 20px;
-  flex-wrap: wrap;
-  padding: 10px 18px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  min-width: 0;
 }
 
-.btn-mic {
-  min-width: 96px;
-  border-color: var(--border);
-}
-
-.btn-mic[aria-pressed="true"] {
-  background: var(--mic-on);
-  border-color: var(--mic-on);
-  color: #1a0507;
-  font-weight: 600;
-}
-
-.volume-control {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--text-dim);
-}
-
-.volume-control input[type="range"] {
-  width: 140px;
-  accent-color: var(--accent);
-}
-
-.volume-value {
-  font-size: 11px;
-  color: var(--text-dim);
-}
-
-.hotkey-control {
+.topbar-actions {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
-  color: var(--text-dim);
 }
 
-.hotkey-display {
-  min-width: 90px;
-  padding: 4px 8px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text);
-  font-size: 12px;
-  text-align: center;
+/* ---------- タブ ---------- */
+
+.tabs {
+  display: flex;
+  gap: 4px;
 }
 
-.hotkey-display.recording {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.btn {
+/* category-tab: 透明地・muted 文字 */
+.tab {
   padding: 8px 14px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--surface-hover);
-  color: var(--text);
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* category-tab-active: surface-card 地・ink 文字 */
+.tab[aria-selected="true"] {
+  background: var(--card);
+  color: var(--ink);
+}
+
+.content {
+  min-width: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hairline) transparent;
+}
+
+.content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: var(--hairline);
+  border-radius: 4px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tabpanel {
+  padding: 20px;
+}
+
+.tabpanel:focus-visible {
+  outline-offset: -3px;
+}
+
+/* 入力・出力を横並びのカードに。幅が足りなければ自動で縦積み */
+.panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  align-items: start;
+  gap: 16px;
+}
+
+/* feature-card: surface-card 地 / radius 12 / shadow なし */
+.panel-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--card);
+  border-radius: var(--r-lg);
+}
+
+/* ---------- 活字 ---------- */
+
+/* caption-uppercase: 12px / 500 / 1.5px tracking */
+.eyebrow {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* 数値の読み出しは code (JetBrains Mono) */
+.readout {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+/* ---------- ブランド ---------- */
+
+/* display: serif 500・負のトラッキング（DESIGN.md の声） */
+.brand-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+  text-transform: none;
+  color: var(--ink);
+}
+
+.icon-btn {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  background: var(--canvas);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+}
+
+.icon-btn:active {
+  color: var(--ink);
+}
+
+/* ---------- フィールド ---------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 経路図の代わりに、どこへ音が届くかを言葉で示す */
+.field-hint {
+  margin: -4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted-soft);
+}
+
+/* caption: 13px / 500 */
+.field-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* text-input: 高さ40px / radius 8px。デバイス名は code (mono) */
+select {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  background: var(--canvas);
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  font-family: var(--font-mono);
   font-size: 13px;
   cursor: pointer;
-  transition: background-color 0.12s ease;
 }
 
-.btn:hover {
-  background: #34373f;
+input[type="range"] {
+  width: 100%;
+  height: 3px;
+  margin: 4px 0;
+  appearance: none;
+  background: var(--hairline);
+  border-radius: 2px;
+  cursor: pointer;
 }
 
-.btn-primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #0c1420;
-  font-weight: 600;
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: none;
+  cursor: pointer;
 }
 
-.btn-primary:hover {
-  background: var(--accent-hover);
+/* ---------- LIVE トグル（赤はここだけ） ---------- */
+
+/* トップバー常駐。設定タブに隠さず、マイクの生死を常に見せる */
+.live-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 14px;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  color: var(--body);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
-.btn-danger {
-  background: transparent;
-  border-color: var(--danger);
-  color: var(--danger);
+.tally {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--hairline);
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.btn-danger:hover {
-  background: var(--danger);
-  color: #1a0507;
+.live-btn[aria-pressed="true"] {
+  border-color: var(--live);
+  color: var(--live);
+  background: var(--live-glow);
 }
 
-main {
+.live-btn[aria-pressed="true"] .tally {
+  background: var(--live);
+  box-shadow: 0 0 0 4px var(--live-glow);
+  animation: tally-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes tally-breathe {
+  50% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+
+/* ---------- ホットキー ---------- */
+
+.hotkey-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 表示欄そのものがボタン: クリックで録音開始（設定ボタンは持たない） */
+.hotkey-display {
   flex: 1;
-  overflow-y: auto;
-  padding: 18px;
+  min-width: 0;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
 }
+
+.hotkey-display.is-recording {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* 解除×: 設定済みのときだけ現れる控えめな操作 */
+.ghost-btn {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--muted-soft);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ghost-btn:active {
+  color: var(--ink);
+  background: var(--card-strong);
+}
+
+/* ---------- ボタン ---------- */
+
+/* button: 14px / 500、高さ40px、radius 8px */
+.btn {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--hairline);
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* サイドバー内の小さめ操作 (設定/解除)。36px は icon-circular の前例 */
+.btn-quiet {
+  height: 36px;
+  padding: 0 14px;
+  color: var(--body);
+}
+
+.btn-quiet:active {
+  color: var(--ink);
+  background: var(--card);
+}
+
+/* button-primary: coral。押下で primary-active に沈むのみ（hover装飾なし） */
+.btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+
+.btn-primary:active {
+  background: var(--primary-active);
+  border-color: var(--primary-active);
+}
+
+/* ---------- サウンド ---------- */
 
 .sound-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 12px;
 }
 
+/* パネルカードと同じ地では埋没するため、canvas 地 + hairline で一段引く */
 .sound-card {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 18px 12px;
   min-height: 72px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: var(--text);
-  font-size: 13px;
+  padding: 16px 36px 16px 16px;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: left;
   cursor: pointer;
-  transition: background-color 0.1s ease, transform 0.05s ease, border-color 0.1s ease;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+  transition: background-color 0.12s ease, transform 0.06s ease;
 }
 
 .sound-card:hover {
-  background: var(--surface-hover);
-  border-color: var(--accent);
+  background: var(--card);
 }
 
 .sound-card:active {
-  transform: scale(0.97);
+  transform: scale(0.985);
 }
 
-.sound-card .remove-btn {
+/* 削除は赤を使わない（赤は LIVE 専用） */
+.remove-btn {
   position: absolute;
-  top: 4px;
-  right: 6px;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
   border: none;
+  border-radius: var(--r-sm);
   background: transparent;
-  color: var(--text-dim);
-  font-size: 14px;
+  color: var(--muted-soft);
+  font-size: 15px;
   line-height: 1;
   cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.12s ease, color 0.12s ease;
 }
 
-.sound-card .remove-btn:hover {
-  color: var(--danger);
-  background: rgba(255, 90, 110, 0.12);
+.sound-card:hover .remove-btn,
+.sound-card:focus-within .remove-btn {
+  opacity: 1;
 }
+
+.remove-btn:active {
+  color: var(--ink);
+}
+
+/* ---------- 空状態 ---------- */
 
 .empty-state {
-  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 48px 24px;
   text-align: center;
-  padding: 48px 0;
+  border: 1px dashed var(--hairline);
+  border-radius: var(--r-lg);
 }
 
+.empty-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  color: var(--ink);
+}
+
+.empty-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ---------- ステータスバー ---------- */
+
+/* エクスプローラーの流儀: 左にメッセージ、右に件数 */
 .status-bar {
-  padding: 6px 18px;
-  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 16px;
+  min-height: 32px;
   font-size: 12px;
-  color: var(--text-dim);
-  border-top: 1px solid var(--border);
+  color: var(--muted-soft);
   background: var(--surface);
+  border-top: 1px solid var(--hairline);
 }
 
-.status-bar.error {
-  color: var(--danger);
+.status-bar .readout {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+/* エラーは琥珀 (DESIGN.md warning)。赤は LIVE 専用のため使わない */
+.status-bar.is-error #status-message {
+  color: var(--warn);
+}
+
+/* ---------- 応答性 ---------- */
+
+@media (max-width: 900px) {
+  .app {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    flex-wrap: wrap;
+  }
+
+  .tabpanel {
+    padding: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before {
+    animation: none !important;
+    transition: none !important;
+  }
 }
